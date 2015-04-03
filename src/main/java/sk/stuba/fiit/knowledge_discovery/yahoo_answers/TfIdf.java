@@ -6,7 +6,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.mahout.common.Pair;
 import org.apache.mahout.common.iterator.sequencefile.SequenceFileIterable;
 import org.apache.mahout.vectorizer.DictionaryVectorizer;
@@ -61,12 +60,11 @@ public final class TfIdf {
         writer.close();
     }
 
-    public void calculateTfIdf() throws ClassNotFoundException, IOException,
-            InterruptedException {
+    public void calculateTfIdf()
+            throws ClassNotFoundException, IOException, InterruptedException {
 
-        // Tokenize the documents using Apache Lucene StandardAnalyzer
         DocumentProcessor.tokenizeDocuments(documentsSequencePath,
-                StandardAnalyzer.class, tokenizedDocumentsPath, configuration);
+                PorterAnalyzer.class, tokenizedDocumentsPath, configuration);
 
         DictionaryVectorizer.createTermFrequencyVectors(tokenizedDocumentsPath,
                 new Path(outputFolder),
@@ -87,8 +85,7 @@ public final class TfIdf {
         SequenceFileIterable<Writable, Writable> iterable = new SequenceFileIterable<Writable, Writable>(
                 path, configuration);
         for (Pair<Writable, Writable> pair : iterable) {
-            System.out
-                    .format("%20s > %s\n", pair.getFirst(), pair.getSecond());
+            System.out.format("%15s > %s\n", pair.getFirst(), pair.getSecond());
         }
     }
 
@@ -96,24 +93,24 @@ public final class TfIdf {
         this.printSequenceFile(this.documentsSequencePath);
 
         System.out.println("\n Step 1: Word count ");
-        this.printSequenceFile(new Path(this.outputFolder
-                + "wordcount/part-r-00000"));
+        this.printSequenceFile(new Path(this.outputFolder +
+                "wordcount/part-r-00000"));
 
         System.out.println("\n Step 2: Word dictionary ");
         this.printSequenceFile(new Path(this.outputFolder,
                 "dictionary.file-0"));
 
         System.out.println("\n Step 3: Term Frequency Vectors ");
-        this.printSequenceFile(new Path(this.outputFolder
-                + "tf-vectors/part-r-00000"));
+        this.printSequenceFile(new Path(this.outputFolder +
+                "tf-vectors/part-r-00000"));
 
         System.out.println("\n Step 4: Document Frequency ");
-        this.printSequenceFile(new Path(this.outputFolder
-                + "tfidf/df-count/part-r-00000"));
+        this.printSequenceFile(new Path(this.outputFolder +
+                "tfidf/df-count/part-r-00000"));
 
         System.out.println("\n Step 5: TFIDF ");
-        this.printSequenceFile(new Path(this.outputFolder
-                + "tfidf/tfidf-vectors/part-r-00000"));
+        this.printSequenceFile(new Path(this.outputFolder +
+                "tfidf/tfidf-vectors/part-r-00000"));
     }
 
 }
