@@ -5,7 +5,7 @@ public final class Utils {
     private Utils() {}
 
     public static String normalizeString(String s) {
-        // Remove html tags
+        // Remove html tags (<br>, <br />, ...)
         s = s.replaceAll("<[a-zA-Z]+( *?/)?>", "");
 
         // I'm -> im, don't -> dont, doesn't -> doesnt, ...

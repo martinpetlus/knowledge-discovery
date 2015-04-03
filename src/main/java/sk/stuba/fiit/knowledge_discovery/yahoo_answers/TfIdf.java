@@ -43,8 +43,8 @@ public final class TfIdf {
         tokenizedDocumentsPath = new Path(outputFolder,
                 DocumentProcessor.TOKENIZED_DOCUMENT_OUTPUT_FOLDER);
         tfidfPath = new Path(outputFolder + "tfidf");
-        termFrequencyVectorsPath = new Path(outputFolder
-                + DictionaryVectorizer.DOCUMENT_VECTOR_OUTPUT_FOLDER);
+        termFrequencyVectorsPath = new Path(outputFolder +
+                DictionaryVectorizer.DOCUMENT_VECTOR_OUTPUT_FOLDER);
     }
 
     public void addQuestions(final List<Question> questions) throws IOException {
@@ -82,8 +82,9 @@ public final class TfIdf {
     }
 
     private void printSequenceFile(final Path path) {
-        SequenceFileIterable<Writable, Writable> iterable = new SequenceFileIterable<Writable, Writable>(
-                path, configuration);
+        SequenceFileIterable<Writable, Writable> iterable =
+                new SequenceFileIterable<Writable, Writable>(path, configuration);
+
         for (Pair<Writable, Writable> pair : iterable) {
             System.out.format("%15s > %s\n", pair.getFirst(), pair.getSecond());
         }

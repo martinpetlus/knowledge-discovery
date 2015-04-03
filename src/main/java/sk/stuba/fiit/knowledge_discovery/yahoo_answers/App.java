@@ -14,6 +14,9 @@ public final class App {
         tfIdf.addQuestions(questions);
         tfIdf.calculateTfIdf();
         tfIdf.printAll();
+
+        System.out.println();
+        System.out.println(tfIdf.tfIdfVectorsToCSV());
     }
 
 }
