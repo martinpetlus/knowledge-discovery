@@ -97,8 +97,7 @@ public final class TfIdf {
                 "wordcount/part-r-00000"));
 
         System.out.println("\n Step 2: Word dictionary ");
-        this.printSequenceFile(new Path(this.outputFolder,
-                "dictionary.file-0"));
+        this.printSequenceFile(getWordDictionaryPath());
 
         System.out.println("\n Step 3: Term Frequency Vectors ");
         this.printSequenceFile(new Path(this.outputFolder +
@@ -109,8 +108,96 @@ public final class TfIdf {
                 "tfidf/df-count/part-r-00000"));
 
         System.out.println("\n Step 5: TFIDF ");
-        this.printSequenceFile(new Path(this.outputFolder +
-                "tfidf/tfidf-vectors/part-r-00000"));
+        this.printSequenceFile(getTfIdfVectorsPath());
+    }
+
+    private Path getWordDictionaryPath() {
+        return new Path(this.outputFolder, "dictionary.file-0");
+    }
+
+    private Path getTfIdfVectorsPath() {
+        return new Path(this.outputFolder + "tfidf/tfidf-vectors/part-r-00000");
+    }
+
+    private int getWordCount() {
+        int count = 0;
+
+        SequenceFileIterable<Writable, Writable> iterable =
+                new SequenceFileIterable<Writable, Writable>(getWordDictionaryPath(), configuration);
+
+        for (Pair<Writable, Writable> pair : iterable) {
+            count++;
+        }
+
+        return count;
+    }
+
+    public String tfIdfVectorsToCSV() {
+        final StringBuffer sb = new StringBuffer();
+
+        final SequenceFileIterable<Writable, Writable> iterable =
+                new SequenceFileIterable<Writable, Writable>(getTfIdfVectorsPath(), configuration);
+
+        for (Pair<Writable, Writable> pair : iterable) {
+            sb.append(pair.getFirst().toString());
+
+            sb.append(',');
+
+            sb.append(parseTfIdfVectorToCSV(pair.getSecond().toString()));
+            sb.append("\n");
+        }
+
+        return sb.toString();
+    }
+
+    private String parseTfIdfVectorToCSV(final String vector) {
+        final StringBuffer sb = new StringBuffer();
+
+        final String[] values = vector.replaceAll("[{}]", "").split(",+");
+
+        final int wordCount = getWordCount();
+
+        int lastIndex = -1;
+
+        for (int i = 0; i < values.length; i++) {
+            String tokens[] = values[i].split(":");
+
+            int index = Integer.parseInt(tokens[0]);
+            double value = Double.parseDouble(tokens[1]);
+
+            sb.append(getCSVFilledEmptyVectorValues(lastIndex, index, true));
+
+            sb.append(value);
+
+            if (i + 1 < wordCount) {
+                sb.append(",");
+            }
+
+            lastIndex = index;
+        }
+
+        sb.append(getCSVFilledEmptyVectorValues(lastIndex, wordCount, false));
+
+        return sb.toString();
+    }
+
+    private String getCSVFilledEmptyVectorValues(
+            final int lastIndex, final int currentIndex, final boolean appendLastComma) {
+        final StringBuffer sb = new StringBuffer();
+
+        for (int i = lastIndex + 1; i < currentIndex; i++) {
+            sb.append(0.0);
+
+            if (i + 1 < currentIndex) {
+                sb.append(',');
+            } else {
+                if (appendLastComma) {
+                    sb.append(',');
+                }
+            }
+        }
+
+        return sb.toString();
     }
 
 }
