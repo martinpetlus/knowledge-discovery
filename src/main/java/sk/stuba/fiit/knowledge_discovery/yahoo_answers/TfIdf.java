@@ -19,22 +19,21 @@ import java.util.List;
 // http://technobium.com/tfidf-explained-using-apache-mahout/
 public final class TfIdf {
 
-    private String outputFolder;
+    private final String outputFolder;
 
-    private Configuration configuration;
+    private final Configuration configuration;
 
-    private FileSystem fileSystem;
+    private final FileSystem fileSystem;
 
-    private Path documentsSequencePath;
+    private final Path documentsSequencePath;
 
-    private Path tokenizedDocumentsPath;
+    private final Path tokenizedDocumentsPath;
 
-    private Path tfidfPath;
+    private final Path tfIdfPath;
 
-    private Path termFrequencyVectorsPath;
+    private final Path termFrequencyVectorsPath;
 
     public TfIdf() throws IOException {
-
         configuration = new Configuration();
         fileSystem = FileSystem.get(configuration);
 
@@ -42,13 +41,14 @@ public final class TfIdf {
         documentsSequencePath = new Path(outputFolder, "sequence");
         tokenizedDocumentsPath = new Path(outputFolder,
                 DocumentProcessor.TOKENIZED_DOCUMENT_OUTPUT_FOLDER);
-        tfidfPath = new Path(outputFolder + "tfidf");
+
+        tfIdfPath = new Path(outputFolder + "tfidf");
         termFrequencyVectorsPath = new Path(outputFolder +
                 DictionaryVectorizer.DOCUMENT_VECTOR_OUTPUT_FOLDER);
     }
 
     public void addQuestions(final List<Question> questions) throws IOException {
-        SequenceFile.Writer writer = new SequenceFile.Writer(fileSystem,
+        final SequenceFile.Writer writer = new SequenceFile.Writer(fileSystem,
                 configuration, documentsSequencePath, Text.class, Text.class);
 
         for (Question question : questions) {
@@ -73,16 +73,16 @@ public final class TfIdf {
                 true, 1, 100, false, false);
 
         Pair<Long[], List<Path>> documentFrequencies = TFIDFConverter.
-                calculateDF(termFrequencyVectorsPath, tfidfPath,
+                calculateDF(termFrequencyVectorsPath, tfIdfPath,
                         configuration, 100);
 
-        TFIDFConverter.processTfIdf(termFrequencyVectorsPath, tfidfPath,
+        TFIDFConverter.processTfIdf(termFrequencyVectorsPath, tfIdfPath,
                 configuration, documentFrequencies, 1, 100,
                 PartialVectorMerger.NO_NORMALIZING, false, false, false, 1);
     }
 
     private void printSequenceFile(final Path path) {
-        SequenceFileIterable<Writable, Writable> iterable =
+        final SequenceFileIterable<Writable, Writable> iterable =
                 new SequenceFileIterable<Writable, Writable>(path, configuration);
 
         for (Pair<Writable, Writable> pair : iterable) {

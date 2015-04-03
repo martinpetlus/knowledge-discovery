@@ -84,5 +84,5 @@ public final class Question {
     public String toText() {
         return content + " " + subject;
     }
-    
+
 }

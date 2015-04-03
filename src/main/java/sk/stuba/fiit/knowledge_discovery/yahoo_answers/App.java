@@ -5,18 +5,15 @@ import java.util.List;
 public final class App {
 
     public static void main(String args[]) throws Exception {
-        Loader loader = new Loader();
+        final Loader loader = new Loader();
 
-        List<Question> questions = loader.load("data/manner-snippet-1.xml");
+        final List<Question> questions = loader.load("data/manner-snippet-1.xml");
 
-        TfIdf tfIdf = new TfIdf();
+        final TfIdf tfIdf = new TfIdf();
 
         tfIdf.addQuestions(questions);
         tfIdf.calculateTfIdf();
         tfIdf.printAll();
-
-        System.out.println();
-        System.out.println(tfIdf.tfIdfVectorsToCSV());
     }
 
 }

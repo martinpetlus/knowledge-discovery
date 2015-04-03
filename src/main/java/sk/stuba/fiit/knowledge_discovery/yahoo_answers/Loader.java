@@ -20,22 +20,22 @@ public final class Loader {
             throws ParserConfigurationException, IOException, SAXException {
         final List<Question> questions = new ArrayList<Question>();
 
-        File fXmlFile = new File(file);
-        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-        Document doc = dBuilder.parse(fXmlFile);
+        final File fXmlFile = new File(file);
+        final DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+        final DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+        final Document doc = dBuilder.parse(fXmlFile);
 
         doc.getDocumentElement().normalize();
 
-        NodeList questionList = doc.getElementsByTagName("vespaadd");
+        final NodeList questionList = doc.getElementsByTagName("vespaadd");
 
         for (int i = 0; i < questionList.getLength(); i++) {
 
-            Node question = questionList.item(i).getChildNodes().item(0);
+            final Node question = questionList.item(i).getChildNodes().item(0);
 
-            NodeList childNodes = question.getChildNodes();
+            final NodeList childNodes = question.getChildNodes();
 
-            Question.Builder builder = new Question.Builder();
+            final Question.Builder builder = new Question.Builder();
 
             for (int j = 0; j < childNodes.getLength(); j++) {
                 Node node = childNodes.item(j);
