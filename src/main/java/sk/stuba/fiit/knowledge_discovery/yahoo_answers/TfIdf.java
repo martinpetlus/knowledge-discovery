@@ -17,6 +17,7 @@ import org.apache.mahout.vectorizer.tfidf.TFIDFConverter;
 import java.io.IOException;
 import java.util.List;
 
+// http://technobium.com/tfidf-explained-using-apache-mahout/
 public final class TfIdf {
 
     private String outputFolder;
