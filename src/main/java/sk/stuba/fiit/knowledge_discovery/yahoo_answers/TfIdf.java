@@ -153,7 +153,7 @@ public final class TfIdf {
     private String parseTfIdfVectorToCSV(final String vector) {
         final StringBuffer sb = new StringBuffer();
 
-        final String[] values = vector.replaceAll("[{}]", "").split(",+");
+        final String[] values = vector.replaceAll("[{}]", "").split(",");
 
         final int wordCount = getWordCount();
 
