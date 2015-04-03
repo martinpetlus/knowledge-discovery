@@ -8,8 +8,8 @@ public final class Utils {
         // Remove html tags (<br>, <br />, ...)
         s = s.replaceAll("<[a-zA-Z]+( *?/)?>", "");
 
-        // I'm -> im, don't -> dont, doesn't -> doesnt, ...
-        s = s.replaceAll("([a-zA-Z]+)(')([a-zA-Z]+)", "$1$3");
+        // I'm -> Im, don't -> dont, doesn't -> doesnt, ...
+        s = s.replaceAll("\\b([a-zA-Z]+)(')([a-zA-Z]+)\\b", "$1$3");
 
         return s;
     }
