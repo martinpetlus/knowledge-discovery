@@ -13,7 +13,9 @@ import org.apache.mahout.vectorizer.DocumentProcessor;
 import org.apache.mahout.vectorizer.common.PartialVectorMerger;
 import org.apache.mahout.vectorizer.tfidf.TFIDFConverter;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.List;
 
 // http://technobium.com/tfidf-explained-using-apache-mahout/
@@ -91,7 +93,7 @@ public final class TfIdf {
     }
 
     public void printAll() {
-        this.printSequenceFile(this.documentsSequencePath);
+//        this.printSequenceFile(this.documentsSequencePath);
 
         System.out.println("\n Step 1: Word count ");
         this.printSequenceFile(new Path(this.outputFolder +
@@ -133,22 +135,22 @@ public final class TfIdf {
         return count;
     }
 
-    public String tfIdfVectorsToCSV() {
-        final StringBuffer sb = new StringBuffer();
-
+    private void tfIdfVectorsToCSV(final PrintWriter writer) {
         final SequenceFileIterable<Writable, Writable> iterable =
                 new SequenceFileIterable<Writable, Writable>(getTfIdfVectorsPath(), configuration);
 
         for (Pair<Writable, Writable> pair : iterable) {
+            final StringBuffer sb = new StringBuffer();
+
             sb.append(pair.getFirst().toString());
 
             sb.append(',');
 
             sb.append(parseTfIdfVectorToCSV(pair.getSecond().toString()));
             sb.append("\n");
-        }
 
-        return sb.toString();
+            writer.println(sb);
+        }
     }
 
     private String parseTfIdfVectorToCSV(final String vector) {
@@ -199,6 +201,14 @@ public final class TfIdf {
         }
 
         return sb.toString();
+    }
+
+    public void writeTfIdfToFileCSV(final String file) throws FileNotFoundException {
+        PrintWriter writer = new PrintWriter(file);
+
+        tfIdfVectorsToCSV(writer);
+
+        writer.close();
     }
 
 }
