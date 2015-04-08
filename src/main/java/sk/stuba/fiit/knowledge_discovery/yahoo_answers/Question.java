@@ -1,6 +1,13 @@
 package sk.stuba.fiit.knowledge_discovery.yahoo_answers;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public final class Question {
+
+    private static int categoryId = 0;
+
+    private static final Map<String, Integer> categoryToId = new HashMap<String, Integer>();
 
     private final String uri;
 
@@ -11,6 +18,8 @@ public final class Question {
     private final String bestAnswer;
 
     private final String mainCat;
+
+    private final int mainCatId;
 
     public static final class Builder {
 
@@ -59,6 +68,15 @@ public final class Question {
         this.content = Utils.normalizeString(builder.content);
         this.bestAnswer = Utils.normalizeString(builder.bestAnswer);
         this.mainCat = builder.mainCat;
+
+        Integer catId = Question.categoryToId.get(this.mainCat);
+
+        if (catId == null) {
+            Question.categoryToId.put(this.mainCat, categoryId);
+            this.mainCatId = Question.categoryId++;
+        } else {
+            this.mainCatId = catId.intValue();
+        }
     }
 
     public String getContent() {
@@ -83,6 +101,14 @@ public final class Question {
 
     public String toText() {
         return content + " " + subject;
+    }
+
+    public int getMainCatId() {
+        return mainCatId;
+    }
+
+    public static Map<String, Integer> getCategoryToId() {
+        return new HashMap<String, Integer>(Question.categoryToId);
     }
 
 }
