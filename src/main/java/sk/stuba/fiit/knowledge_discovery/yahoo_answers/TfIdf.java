@@ -16,7 +16,9 @@ import org.apache.mahout.vectorizer.tfidf.TFIDFConverter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 // http://technobium.com/tfidf-explained-using-apache-mahout/
 public final class TfIdf {
@@ -35,6 +37,8 @@ public final class TfIdf {
 
     private final Path termFrequencyVectorsPath;
 
+    private Map<String, Question> uriToQuestion;
+
     public TfIdf() throws IOException {
         configuration = new Configuration();
         fileSystem = FileSystem.get(configuration);
@@ -49,14 +53,19 @@ public final class TfIdf {
                 DictionaryVectorizer.DOCUMENT_VECTOR_OUTPUT_FOLDER);
     }
 
-    public void addQuestions(final List<Question> questions) throws IOException {
+    public void putQuestions(final List<Question> questions) throws IOException {
         final SequenceFile.Writer writer = new SequenceFile.Writer(fileSystem,
                 configuration, documentsSequencePath, Text.class, Text.class);
 
+        uriToQuestion = new HashMap<String, Question>();
+
         for (Question question : questions) {
-            Text id = new Text(question.getUri());
+            Text uri = new Text(question.getUri());
             Text text = new Text(question.toText());
-            writer.append(id, text);
+
+            writer.append(uri, text);
+
+            uriToQuestion.put(question.getUri(), question);
         }
 
         writer.close();
@@ -142,14 +151,23 @@ public final class TfIdf {
         for (Pair<Writable, Writable> pair : iterable) {
             final StringBuffer sb = new StringBuffer();
 
-            sb.append(pair.getFirst().toString());
+            final String uri = pair.getFirst().toString();
 
+            // First column is uri of question
+            sb.append(uri);
             sb.append(',');
 
+            // Next columns are tf-idf word values
             sb.append(parseTfIdfVectorToCSV(pair.getSecond().toString()));
-            sb.append("\n");
 
-            writer.println(sb);
+            // Last column is category id
+            sb.append(',');
+            sb.append(uriToQuestion.get(uri).getMainCatId());
+
+            // Append new line character
+            sb.append(System.getProperty("line.separator"));
+
+            writer.print(sb);
         }
     }
 

@@ -11,7 +11,7 @@ public final class App {
 
         final TfIdf tfIdf = new TfIdf();
 
-        tfIdf.addQuestions(questions);
+        tfIdf.putQuestions(questions);
         tfIdf.calculateTfIdf();
         tfIdf.printAll();
 
