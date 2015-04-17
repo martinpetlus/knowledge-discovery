@@ -21,6 +21,18 @@ public final class Question {
 
     private final int mainCatId;
 
+    private static boolean appendContent = false;
+
+    private static boolean appendBestAnswer = false;
+
+    public static void setAppendContentToText(final boolean appendContent) {
+        Question.appendContent = appendContent;
+    }
+
+    public static void setAppendBestAnswerToText(final boolean appendBestAnswer) {
+        Question.appendBestAnswer = appendBestAnswer;
+    }
+
     public static final class Builder {
 
         private String uri;
@@ -101,7 +113,21 @@ public final class Question {
     }
 
     public String toText() {
-        return content + " " + subject;
+        final StringBuilder sb = new StringBuilder();
+
+        sb.append(subject);
+
+        if (appendContent) {
+            sb.append(' ');
+            sb.append(content);
+        }
+
+        if (appendBestAnswer) {
+            sb.append(' ');
+            sb.append(bestAnswer);
+        }
+
+        return sb.toString().trim();
     }
 
     public int getMainCatId() {
