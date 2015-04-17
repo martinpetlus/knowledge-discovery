@@ -25,12 +25,12 @@ public final class Question {
 
     private static boolean includeBestAnswer = false;
 
-    public static void setIncludeContentToText(final boolean appendContent) {
-        Question.includeContent = appendContent;
+    public static void setIncludeContentToText(final boolean includeContent) {
+        Question.includeContent = includeContent;
     }
 
-    public static void setIncludeBestAnswerToText(final boolean appendBestAnswer) {
-        Question.includeBestAnswer = appendBestAnswer;
+    public static void setIncludeBestAnswerToText(final boolean includeBestAnswer) {
+        Question.includeBestAnswer = includeBestAnswer;
     }
 
     public static final class Builder {
