@@ -21,16 +21,16 @@ public final class Question {
 
     private final int mainCatId;
 
-    private static boolean appendContent = false;
+    private static boolean includeContent = false;
 
-    private static boolean appendBestAnswer = false;
+    private static boolean includeBestAnswer = false;
 
-    public static void setAppendContentToText(final boolean appendContent) {
-        Question.appendContent = appendContent;
+    public static void setIncludeContentToText(final boolean appendContent) {
+        Question.includeContent = appendContent;
     }
 
-    public static void setAppendBestAnswerToText(final boolean appendBestAnswer) {
-        Question.appendBestAnswer = appendBestAnswer;
+    public static void setIncludeBestAnswerToText(final boolean appendBestAnswer) {
+        Question.includeBestAnswer = appendBestAnswer;
     }
 
     public static final class Builder {
@@ -117,12 +117,12 @@ public final class Question {
 
         sb.append(subject);
 
-        if (appendContent) {
+        if (includeContent) {
             sb.append(' ');
             sb.append(content);
         }
 
-        if (appendBestAnswer) {
+        if (includeBestAnswer) {
             sb.append(' ');
             sb.append(bestAnswer);
         }
