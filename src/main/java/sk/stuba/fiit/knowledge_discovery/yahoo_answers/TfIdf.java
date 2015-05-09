@@ -199,8 +199,8 @@ public final class TfIdf {
 
             sb.append(value.getValue());
 
-            if (i + 1 < wordCount) {
-                sb.append(",");
+            if (i + 1 < valueList.size()) {
+                sb.append(',');
             }
 
             lastIndex = value.getIndex();
@@ -214,6 +214,8 @@ public final class TfIdf {
     private String getCSVFilledEmptyVectorValues(
             final int lastIndex, final int currentIndex, final boolean appendLastComma) {
         final StringBuffer sb = new StringBuffer();
+
+        System.out.println(lastIndex + " " + currentIndex);
 
         for (int i = lastIndex + 1; i < currentIndex; i++) {
             sb.append(0.0);
