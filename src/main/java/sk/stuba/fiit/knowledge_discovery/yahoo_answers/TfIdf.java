@@ -215,8 +215,6 @@ public final class TfIdf {
             final int lastIndex, final int currentIndex, final boolean appendLastComma) {
         final StringBuffer sb = new StringBuffer();
 
-        System.out.println(lastIndex + " " + currentIndex);
-
         for (int i = lastIndex + 1; i < currentIndex; i++) {
             sb.append(0.0);
 
