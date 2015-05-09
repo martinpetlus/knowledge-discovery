@@ -160,7 +160,7 @@ public final class TfIdf {
 
             // Last column is category id
             sb.append(',');
-            sb.append(uriToQuestion.get(uri).getMainCatId());
+            sb.append(uriToQuestion.get(uri).getMainCat());
 
             // Append new line character
             sb.append(System.getProperty("line.separator"));
