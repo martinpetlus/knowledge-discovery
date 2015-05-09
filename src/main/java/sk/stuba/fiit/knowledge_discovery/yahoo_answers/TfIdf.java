@@ -199,8 +199,8 @@ public final class TfIdf {
 
             sb.append(value.getValue());
 
-            if (i + 1 < wordCount) {
-                sb.append(",");
+            if (i + 1 < valueList.size()) {
+                sb.append(',');
             }
 
             lastIndex = value.getIndex();
