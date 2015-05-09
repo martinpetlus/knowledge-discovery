@@ -16,9 +16,7 @@ import org.apache.mahout.vectorizer.tfidf.TFIDFConverter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 // http://technobium.com/tfidf-explained-using-apache-mahout/
 public final class TfIdf {
@@ -177,9 +175,7 @@ public final class TfIdf {
 
         final String[] values = vector.replaceAll("[{}]", "").split(",");
 
-        final int wordCount = getWordCount();
-
-        int lastIndex = -1;
+        List<Value> valueList = new ArrayList<Value>();
 
         for (int i = 0; i < values.length; i++) {
             String tokens[] = values[i].split(":");
@@ -187,15 +183,28 @@ public final class TfIdf {
             int index = Integer.parseInt(tokens[0]);
             double value = Double.parseDouble(tokens[1]);
 
-            sb.append(getCSVFilledEmptyVectorValues(lastIndex, index, true));
+            valueList.add(new Value(index, value));
+        }
 
-            sb.append(value);
+        // Sort by index
+        Collections.sort(valueList, Value.CMP);
+
+        final int wordCount = getWordCount();
+
+        int lastIndex = -1;
+
+        for (int i = 0; i < valueList.size(); i++) {
+            Value value = valueList.get(i);
+
+            sb.append(getCSVFilledEmptyVectorValues(lastIndex, value.getIndex(), true));
+
+            sb.append(value.getValue());
 
             if (i + 1 < wordCount) {
                 sb.append(",");
             }
 
-            lastIndex = index;
+            lastIndex = value.getIndex();
         }
 
         sb.append(getCSVFilledEmptyVectorValues(lastIndex, wordCount, false));
@@ -228,6 +237,35 @@ public final class TfIdf {
         tfIdfVectorsToCSV(writer);
 
         writer.close();
+    }
+
+    private static final class Value {
+
+        private final int index;
+
+        private final double value;
+
+        public static final Comparator<Value> CMP = new Comparator<Value>() {
+
+            public int compare(final Value value1, final Value value2) {
+                return value1.getIndex() - value2.getIndex();
+            }
+
+        };
+
+        public Value(final int index, final double value) {
+            this.index = index;
+            this.value = value;
+        }
+
+        public int getIndex() {
+            return index;
+        }
+
+        public double getValue() {
+            return value;
+        }
+
     }
 
 }
