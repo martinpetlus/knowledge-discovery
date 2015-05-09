@@ -157,12 +157,13 @@ public final class TfIdf {
             sb.append(uri);
             sb.append(',');
 
+            // Second column is category id
+            sb.append(uriToQuestion.get(uri).getMainCatId());
+            sb.append(',');
+
             // Next columns are tf-idf word values
             sb.append(parseTfIdfVectorToCSV(pair.getSecond().toString()));
 
-            // Last column is category id
-            sb.append(',');
-            sb.append(uriToQuestion.get(uri).getMainCatId());
 
             // Append new line character
             sb.append(System.getProperty("line.separator"));
