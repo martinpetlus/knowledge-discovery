@@ -1,5 +1,6 @@
 package sk.stuba.fiit.knowledge_discovery.yahoo_answers;
 
+import com.opencsv.CSVWriter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -13,9 +14,8 @@ import org.apache.mahout.vectorizer.DocumentProcessor;
 import org.apache.mahout.vectorizer.common.PartialVectorMerger;
 import org.apache.mahout.vectorizer.tfidf.TFIDFConverter;
 
-import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.*;
 
 // http://technobium.com/tfidf-explained-using-apache-mahout/
@@ -35,9 +35,16 @@ public final class TfIdf {
 
     private final Path termFrequencyVectorsPath;
 
+//    private final Map<String, Integer> wordCountMap;
+//
+//    private final Map<String, Integer> wordDictionaryMap;
+
     private Map<String, Question> uriToQuestion;
 
     public TfIdf() throws IOException {
+//        wordCountMap = new HashMap<String, Integer>();
+//        wordDictionaryMap = new HashMap<String, Integer>();
+
         configuration = new Configuration();
         fileSystem = FileSystem.get(configuration);
 
@@ -86,8 +93,11 @@ public final class TfIdf {
                         configuration, 100);
 
         TFIDFConverter.processTfIdf(termFrequencyVectorsPath, tfIdfPath,
-                configuration, documentFrequencies, 1, 100,
-                PartialVectorMerger.NO_NORMALIZING, false, false, false, 1);
+            configuration, documentFrequencies, 1, 100,
+            PartialVectorMerger.NO_NORMALIZING, false, false, false, 1);
+
+//        fillWordCountMap();
+//        fillWordDictionaryMap();
     }
 
     private void printSequenceFile(final Path path) {
@@ -103,8 +113,7 @@ public final class TfIdf {
 //        this.printSequenceFile(this.documentsSequencePath);
 
         System.out.println("\n Step 1: Word count ");
-        this.printSequenceFile(new Path(this.outputFolder +
-                "wordcount/part-r-00000"));
+        this.printSequenceFile(getWordCountPath());
 
         System.out.println("\n Step 2: Word dictionary ");
         this.printSequenceFile(getWordDictionaryPath());
@@ -119,6 +128,32 @@ public final class TfIdf {
 
         System.out.println("\n Step 5: TFIDF ");
         this.printSequenceFile(getTfIdfVectorsPath());
+    }
+
+//    private void fillWordCountMap() {
+//        wordCountMap.clear();
+//
+//        final SequenceFileIterable<Writable, Writable> iterable =
+//            new SequenceFileIterable<Writable, Writable>(getWordCountPath(), configuration);
+//
+//        for (Pair<Writable, Writable> pair : iterable) {
+//            wordCountMap.put(pair.getFirst().toString(), Integer.valueOf(pair.getSecond().toString()));
+//        }
+//    }
+//
+//    private void fillWordDictionaryMap() {
+//        wordDictionaryMap.clear();
+//
+//        final SequenceFileIterable<Writable, Writable> iterable =
+//            new SequenceFileIterable<Writable, Writable>(getWordDictionaryPath(), configuration);
+//
+//        for (Pair<Writable, Writable> pair : iterable) {
+//            wordDictionaryMap.put(pair.getFirst().toString(), Integer.valueOf(pair.getSecond().toString()));
+//        }
+//    }
+
+    private Path getWordCountPath() {
+        return new Path(this.outputFolder + "wordcount/part-r-00000");
     }
 
     private Path getWordDictionaryPath() {
@@ -142,39 +177,31 @@ public final class TfIdf {
         return count;
     }
 
-    private void tfIdfVectorsToCSV(final PrintWriter writer) {
-        final SequenceFileIterable<Writable, Writable> iterable =
-                new SequenceFileIterable<Writable, Writable>(getTfIdfVectorsPath(), configuration);
+    public void writeTfIdfToFileCSV(final String file) throws IOException {
+        CSVWriter writer = new CSVWriter(new FileWriter(file), ',');
+
+        SequenceFileIterable<Writable, Writable> iterable =
+            new SequenceFileIterable<Writable, Writable>(getTfIdfVectorsPath(), configuration);
+
+        int wordCount = getWordCount();
 
         for (Pair<Writable, Writable> pair : iterable) {
-            final StringBuffer sb = new StringBuffer();
+            String uri = pair.getFirst().toString();
 
-            final String uri = pair.getFirst().toString();
+            String vector = pair.getSecond().toString();
 
-            // First column is uri of question
-            sb.append(uri);
-            sb.append(',');
+            String mainCat = String.valueOf(uriToQuestion.get(uri).getMainCatId());
 
-            // Next columns are tf-idf word values
-            sb.append(parseTfIdfVectorToCSV(pair.getSecond().toString()));
-
-            // Last column is category id
-            sb.append(',');
-            sb.append(uriToQuestion.get(uri).getMainCatId());
-
-            // Append new line character
-            sb.append(System.getProperty("line.separator"));
-
-            writer.print(sb);
+            writer.writeNext(parseTfIdfVector(vector, wordCount, mainCat));
         }
+
+        writer.close();
     }
 
-    private String parseTfIdfVectorToCSV(final String vector) {
-        final StringBuffer sb = new StringBuffer();
-
+    private static String[] parseTfIdfVector(final String vector, final int wordCount, final String mainCat) {
         final String[] values = vector.replaceAll("[{}]", "").split(",");
 
-        List<Value> valueList = new ArrayList<Value>();
+        Map<Integer, Double> indexValueMap = new HashMap<Integer, Double>();
 
         for (int i = 0; i < values.length; i++) {
             String tokens[] = values[i].split(":");
@@ -182,89 +209,24 @@ public final class TfIdf {
             int index = Integer.parseInt(tokens[0]);
             double value = Double.parseDouble(tokens[1]);
 
-            valueList.add(new Value(index, value));
+            indexValueMap.put(index, value);
         }
 
-        // Sort by index
-        Collections.sort(valueList, Value.CMP);
+        // Plus one for main category
+        String[] valueArray = new String[wordCount + 1];
 
-        final int wordCount = getWordCount();
+        // Last column is main category
+        valueArray[wordCount] = mainCat;
 
-        int lastIndex = -1;
-
-        for (int i = 0; i < valueList.size(); i++) {
-            Value value = valueList.get(i);
-
-            sb.append(getCSVFilledEmptyVectorValues(lastIndex, value.getIndex(), true));
-
-            sb.append(value.getValue());
-
-            if (i + 1 < valueList.size()) {
-                sb.append(',');
-            }
-
-            lastIndex = value.getIndex();
-        }
-
-        sb.append(getCSVFilledEmptyVectorValues(lastIndex, wordCount, false));
-
-        return sb.toString();
-    }
-
-    private String getCSVFilledEmptyVectorValues(
-            final int lastIndex, final int currentIndex, final boolean appendLastComma) {
-        final StringBuffer sb = new StringBuffer();
-
-        for (int i = lastIndex + 1; i < currentIndex; i++) {
-            sb.append(0.0);
-
-            if (i + 1 < currentIndex) {
-                sb.append(',');
+        for (int i = 0; i < wordCount; i++) {
+            if (indexValueMap.containsKey(i)) {
+                valueArray[i] = String.valueOf(indexValueMap.get(i));
             } else {
-                if (appendLastComma) {
-                    sb.append(',');
-                }
+                valueArray[i] = String.valueOf(0);
             }
         }
 
-        return sb.toString();
-    }
-
-    public void writeTfIdfToFileCSV(final String file) throws FileNotFoundException {
-        PrintWriter writer = new PrintWriter(file);
-
-        tfIdfVectorsToCSV(writer);
-
-        writer.close();
-    }
-
-    private static final class Value {
-
-        private final int index;
-
-        private final double value;
-
-        public static final Comparator<Value> CMP = new Comparator<Value>() {
-
-            public int compare(final Value value1, final Value value2) {
-                return value1.getIndex() - value2.getIndex();
-            }
-
-        };
-
-        public Value(final int index, final double value) {
-            this.index = index;
-            this.value = value;
-        }
-
-        public int getIndex() {
-            return index;
-        }
-
-        public double getValue() {
-            return value;
-        }
-
+        return valueArray;
     }
 
 }
