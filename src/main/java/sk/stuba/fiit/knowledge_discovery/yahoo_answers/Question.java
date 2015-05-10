@@ -73,7 +73,7 @@ public final class Question {
     private Question(final Builder builder) {
         if (builder.mainCat == null) {
             throw new IllegalArgumentException("Illegal main cat: " +
-                builder.mainCat + "of question with uri: " + builder.uri);
+                builder.mainCat + " of question with uri: " + builder.uri);
         }
 
         this.uri = builder.uri;
