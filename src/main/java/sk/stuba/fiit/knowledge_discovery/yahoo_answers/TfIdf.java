@@ -192,13 +192,16 @@ public final class TfIdf {
 
             String mainCat = String.valueOf(uriToQuestion.get(uri).getMainCatId());
 
-            writer.writeNext(parseTfIdfVector(vector, wordCount, mainCat));
+            writer.writeNext(parseTfIdfVector(uri, vector, wordCount, mainCat));
         }
 
         writer.close();
     }
 
-    private static String[] parseTfIdfVector(final String vector, final int wordCount, final String mainCat) {
+    private static String[] parseTfIdfVector(final String uri,
+                                             final String vector,
+                                             final int wordCount,
+                                             final String mainCat) {
         final String[] values = vector.replaceAll("[{}]", "").split(",");
 
         Map<Integer, Double> indexValueMap = new HashMap<Integer, Double>();
@@ -212,15 +215,20 @@ public final class TfIdf {
             indexValueMap.put(index, value);
         }
 
-        // Plus one for main category
-        String[] valueArray = new String[wordCount + 1];
+        // Plus one for main category and one for uri of question
+        String[] valueArray = new String[wordCount + 2];
+
+        // First column is uri of question
+        valueArray[0] = uri;
 
         // Last column is main category
-        valueArray[wordCount] = mainCat;
+        valueArray[wordCount + 1] = mainCat;
 
-        for (int i = 0; i < wordCount; i++) {
-            if (indexValueMap.containsKey(i)) {
-                valueArray[i] = String.valueOf(indexValueMap.get(i));
+        for (int i = 1; i <= wordCount; i++) {
+            int index = i - 1;
+
+            if (indexValueMap.containsKey(index)) {
+                valueArray[i] = String.valueOf(indexValueMap.get(index));
             } else {
                 valueArray[i] = String.valueOf(0);
             }
