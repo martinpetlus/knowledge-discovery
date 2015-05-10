@@ -18,7 +18,8 @@ public final class App {
         Question.setIncludeBestAnswerToText(Configuration.
             getBooleanProperty("INCLUDE_BEST_ANSWER"));
 
-        final TfIdf tfIdf = new TfIdf();
+        final TfIdf tfIdf = new TfIdf(Integer.valueOf(Configuration.
+            getIntProperty("WORD_MINIMUM_OCCURRENCE")));
 
         tfIdf.putQuestions(questions);
         tfIdf.calculateTfIdf();

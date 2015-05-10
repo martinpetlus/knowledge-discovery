@@ -35,26 +35,23 @@ public final class TfIdf {
 
     private final Path termFrequencyVectorsPath;
 
-//    private final Map<String, Integer> wordCountMap;
-//
-//    private final Map<String, Integer> wordDictionaryMap;
-
     private Map<String, Question> uriToQuestion;
 
-    public TfIdf() throws IOException {
-//        wordCountMap = new HashMap<String, Integer>();
-//        wordDictionaryMap = new HashMap<String, Integer>();
+    private final int minimumWordOccurrence;
 
-        configuration = new Configuration();
-        fileSystem = FileSystem.get(configuration);
+    public TfIdf(final int minimumWordOccurrence) throws IOException {
+        this.minimumWordOccurrence = minimumWordOccurrence;
 
-        outputFolder = "output/";
-        documentsSequencePath = new Path(outputFolder, "sequence");
-        tokenizedDocumentsPath = new Path(outputFolder,
+        this.configuration = new Configuration();
+        this.fileSystem = FileSystem.get(this.configuration);
+
+        this.outputFolder = "output/";
+        this.documentsSequencePath = new Path(this.outputFolder, "sequence");
+        this.tokenizedDocumentsPath = new Path(this.outputFolder,
                 DocumentProcessor.TOKENIZED_DOCUMENT_OUTPUT_FOLDER);
 
-        tfIdfPath = new Path(outputFolder + "tfidf");
-        termFrequencyVectorsPath = new Path(outputFolder +
+        this.tfIdfPath = new Path(outputFolder + "tfidf");
+        this.termFrequencyVectorsPath = new Path(this.outputFolder +
                 DictionaryVectorizer.DOCUMENT_VECTOR_OUTPUT_FOLDER);
     }
 
@@ -80,13 +77,13 @@ public final class TfIdf {
             throws ClassNotFoundException, IOException, InterruptedException {
 
         DocumentProcessor.tokenizeDocuments(documentsSequencePath,
-                PorterAnalyzer.class, tokenizedDocumentsPath, configuration);
+            PorterAnalyzer.class, tokenizedDocumentsPath, configuration);
 
         DictionaryVectorizer.createTermFrequencyVectors(tokenizedDocumentsPath,
-                new Path(outputFolder),
-                DictionaryVectorizer.DOCUMENT_VECTOR_OUTPUT_FOLDER,
-                configuration, 1, 1, 0.0f, PartialVectorMerger.NO_NORMALIZING,
-                true, 1, 100, false, false);
+            new Path(outputFolder),
+            DictionaryVectorizer.DOCUMENT_VECTOR_OUTPUT_FOLDER,
+            configuration, 1, 1, 0.0f, PartialVectorMerger.NO_NORMALIZING,
+            true, 1, 100, false, false);
 
         Pair<Long[], List<Path>> documentFrequencies = TFIDFConverter.
                 calculateDF(termFrequencyVectorsPath, tfIdfPath,
@@ -95,9 +92,6 @@ public final class TfIdf {
         TFIDFConverter.processTfIdf(termFrequencyVectorsPath, tfIdfPath,
             configuration, documentFrequencies, 1, 100,
             PartialVectorMerger.NO_NORMALIZING, false, false, false, 1);
-
-//        fillWordCountMap();
-//        fillWordDictionaryMap();
     }
 
     private void printSequenceFile(final Path path) {
@@ -124,33 +118,55 @@ public final class TfIdf {
 
         System.out.println("\n Step 4: Document Frequency ");
         this.printSequenceFile(new Path(this.outputFolder +
-                "tfidf/df-count/part-r-00000"));
+            "tfidf/df-count/part-r-00000"));
 
         System.out.println("\n Step 5: TFIDF ");
         this.printSequenceFile(getTfIdfVectorsPath());
     }
 
-//    private void fillWordCountMap() {
-//        wordCountMap.clear();
-//
-//        final SequenceFileIterable<Writable, Writable> iterable =
-//            new SequenceFileIterable<Writable, Writable>(getWordCountPath(), configuration);
-//
-//        for (Pair<Writable, Writable> pair : iterable) {
-//            wordCountMap.put(pair.getFirst().toString(), Integer.valueOf(pair.getSecond().toString()));
-//        }
-//    }
-//
-//    private void fillWordDictionaryMap() {
-//        wordDictionaryMap.clear();
-//
-//        final SequenceFileIterable<Writable, Writable> iterable =
-//            new SequenceFileIterable<Writable, Writable>(getWordDictionaryPath(), configuration);
-//
-//        for (Pair<Writable, Writable> pair : iterable) {
-//            wordDictionaryMap.put(pair.getFirst().toString(), Integer.valueOf(pair.getSecond().toString()));
-//        }
-//    }
+    private Map<Integer, Integer> getWordIndexCountMap() {
+        Map<String, Integer> wordCountMap = getWordCountMap();
+
+        Map<String, Integer> wordDictionaryMap = getWordDictionaryMap();
+
+        Map<Integer, Integer> wordIndexCountMap = new HashMap<Integer, Integer>();
+
+        for (Map.Entry<String, Integer> entry : wordDictionaryMap.entrySet()) {
+            String word = entry.getKey();
+
+            Integer wordIndex = entry.getValue();
+
+            wordIndexCountMap.put(wordIndex, wordCountMap.get(word));
+        }
+
+        return wordIndexCountMap;
+    }
+
+    private Map<String, Integer> getWordCountMap() {
+        Map<String, Integer> wordCountMap = new HashMap<String, Integer>();
+
+        SequenceFileIterable<Writable, Writable> iterable =
+            new SequenceFileIterable<Writable, Writable>(getWordCountPath(), configuration);
+
+        for (Pair<Writable, Writable> pair : iterable) {
+            wordCountMap.put(pair.getFirst().toString(), Integer.valueOf(pair.getSecond().toString()));
+        }
+
+        return wordCountMap;
+    }
+
+    private Map<String, Integer> getWordDictionaryMap() {
+        Map<String, Integer> wordDictionaryMap = new HashMap<String, Integer>();
+
+        SequenceFileIterable<Writable, Writable> iterable =
+            new SequenceFileIterable<Writable, Writable>(getWordDictionaryPath(), configuration);
+
+        for (Pair<Writable, Writable> pair : iterable) {
+            wordDictionaryMap.put(pair.getFirst().toString(), Integer.valueOf(pair.getSecond().toString()));
+        }
+
+        return wordDictionaryMap;
+    }
 
     private Path getWordCountPath() {
         return new Path(this.outputFolder + "wordcount/part-r-00000");
@@ -185,6 +201,8 @@ public final class TfIdf {
 
         int wordCount = getWordCount();
 
+        Map<Integer, Integer> wordIndexCountMap = getWordIndexCountMap();
+
         for (Pair<Writable, Writable> pair : iterable) {
             String uri = pair.getFirst().toString();
 
@@ -192,16 +210,17 @@ public final class TfIdf {
 
             String mainCat = String.valueOf(uriToQuestion.get(uri).getMainCatId());
 
-            writer.writeNext(parseTfIdfVector(uri, vector, wordCount, mainCat));
+            writer.writeNext(parseTfIdfVector(uri, vector, wordCount, mainCat, wordIndexCountMap));
         }
 
         writer.close();
     }
 
-    private static String[] parseTfIdfVector(final String uri,
-                                             final String vector,
-                                             final int wordCount,
-                                             final String mainCat) {
+    private String[] parseTfIdfVector(final String uri,
+                                      final String vector,
+                                      final int wordCount,
+                                      final String mainCat,
+                                      final Map<Integer, Integer> wordIndexCountMap) {
         final String[] values = vector.replaceAll("[{}]", "").split(",");
 
         Map<Integer, Double> indexValueMap = new HashMap<Integer, Double>();
@@ -215,26 +234,28 @@ public final class TfIdf {
             indexValueMap.put(index, value);
         }
 
-        // Plus one for main category and one for uri of question
-        String[] valueArray = new String[wordCount + 2];
+        List<String> valueList = new ArrayList<String>();
 
         // First column is uri of question
-        valueArray[0] = uri;
+        valueList.add(uri);
 
-        // Last column is main category
-        valueArray[wordCount + 1] = mainCat;
+        for (int wordIndex = 0; wordIndex < wordCount; wordIndex++) {
+            // Skip words (columns) with less minimum occurrence
+            if (wordIndexCountMap.get(wordIndex) < minimumWordOccurrence) {
+                continue;
+            }
 
-        for (int i = 1; i <= wordCount; i++) {
-            int index = i - 1;
-
-            if (indexValueMap.containsKey(index)) {
-                valueArray[i] = String.valueOf(indexValueMap.get(index));
+            if (indexValueMap.containsKey(wordIndex)) {
+                valueList.add(String.valueOf(indexValueMap.get(wordIndex)));
             } else {
-                valueArray[i] = String.valueOf(0);
+                valueList.add(String.valueOf(0));
             }
         }
 
-        return valueArray;
+        // Last column is main category
+        valueList.add(mainCat);
+
+        return valueList.toArray(new String[valueList.size()]);
     }
 
 }

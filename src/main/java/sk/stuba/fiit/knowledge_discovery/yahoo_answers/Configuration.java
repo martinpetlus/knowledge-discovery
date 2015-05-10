@@ -20,6 +20,10 @@ public final class Configuration {
         return Boolean.valueOf(props.getProperty(name));
     }
 
+    public static int getIntProperty(final String name) {
+        return Integer.valueOf(props.getProperty(name));
+    }
+
     public static String getStringProperty(final String name) {
         return props.getProperty(name);
     }
