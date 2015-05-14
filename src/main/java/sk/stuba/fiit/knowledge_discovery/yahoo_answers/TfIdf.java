@@ -37,10 +37,10 @@ public final class TfIdf {
 
     private Map<String, Question> uriToQuestion;
 
-    private final int minimumWordOccurrence;
+    private final int minimumWordDocumentFrequency;
 
-    public TfIdf(final int minimumWordOccurrence) throws IOException {
-        this.minimumWordOccurrence = minimumWordOccurrence;
+    public TfIdf(final int minimumWordDocumentFrequency) throws IOException {
+        this.minimumWordDocumentFrequency = minimumWordDocumentFrequency;
 
         this.configuration = new Configuration();
         this.fileSystem = FileSystem.get(this.configuration);
@@ -155,6 +155,23 @@ public final class TfIdf {
         return wordCountMap;
     }
 
+    private Map<Integer, Integer> getWordIndexDocumentFrequencyMap() {
+        Map<Integer, Integer> map = new HashMap<Integer, Integer>();
+
+        SequenceFileIterable<Writable, Writable> iterable =
+            new SequenceFileIterable<Writable, Writable>(getWordDocumentFrequencyPath(), configuration);
+
+        for (Pair<Writable, Writable> pair : iterable) {
+            Integer wordIndex = Integer.valueOf(pair.getFirst().toString());
+
+            Integer documentFrequency = Integer.valueOf(pair.getSecond().toString());
+
+            map.put(wordIndex, documentFrequency);
+        }
+
+        return map;
+    }
+
     private Map<String, Integer> getWordDictionaryMap() {
         Map<String, Integer> wordDictionaryMap = new HashMap<String, Integer>();
 
@@ -180,6 +197,10 @@ public final class TfIdf {
         return new Path(this.outputFolder + "tfidf/tfidf-vectors/part-r-00000");
     }
 
+    private Path getWordDocumentFrequencyPath() {
+        return new Path(this.outputFolder + "tfidf/df-count/part-r-00000");
+    }
+
     private int getWordCount() {
         int count = 0;
 
@@ -201,16 +222,16 @@ public final class TfIdf {
 
         int wordCount = getWordCount();
 
-        Map<Integer, Integer> wordIndexCountMap = getWordIndexCountMap();
+        Map<Integer, Integer> wordIndexDocFreqMap = getWordIndexDocumentFrequencyMap();
 
         for (Pair<Writable, Writable> pair : iterable) {
             String uri = pair.getFirst().toString();
 
             String vector = pair.getSecond().toString();
 
-            String mainCat = String.valueOf(uriToQuestion.get(uri).getMainCatId());
+            String mainCat = String.valueOf(uriToQuestion.get(uri).getMainCat());
 
-            writer.writeNext(parseTfIdfVector(uri, vector, wordCount, mainCat, wordIndexCountMap));
+            writer.writeNext(parseTfIdfVector(uri, vector, wordCount, mainCat, wordIndexDocFreqMap));
         }
 
         writer.close();
@@ -220,7 +241,7 @@ public final class TfIdf {
                                       final String vector,
                                       final int wordCount,
                                       final String mainCat,
-                                      final Map<Integer, Integer> wordIndexCountMap) {
+                                      final Map<Integer, Integer> wordIndexDocFreqMap) {
         final String[] values = vector.replaceAll("[{}]", "").split(",");
 
         Map<Integer, Double> indexValueMap = new HashMap<Integer, Double>();
@@ -240,8 +261,8 @@ public final class TfIdf {
         valueList.add(uri);
 
         for (int wordIndex = 0; wordIndex < wordCount; wordIndex++) {
-            // Skip words (columns) with less minimum occurrence
-            if (wordIndexCountMap.get(wordIndex) < minimumWordOccurrence) {
+            // Skip words (columns) with less minimum document frequency
+            if (wordIndexDocFreqMap.get(wordIndex) < minimumWordDocumentFrequency) {
                 continue;
             }
 

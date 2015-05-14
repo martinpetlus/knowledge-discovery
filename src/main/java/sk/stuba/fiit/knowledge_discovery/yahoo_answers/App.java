@@ -19,7 +19,7 @@ public final class App {
             getBooleanProperty("INCLUDE_BEST_ANSWER"));
 
         final TfIdf tfIdf = new TfIdf(Integer.valueOf(Configuration.
-            getIntProperty("WORD_MINIMUM_OCCURRENCE")));
+            getIntProperty("MINIMUM_WORD_DOCUMENT_FREQUENCY")));
 
         tfIdf.putQuestions(questions);
         tfIdf.calculateTfIdf();
